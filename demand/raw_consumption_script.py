@@ -5,7 +5,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
 import matplotlib
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 
 #set working directory
@@ -25,10 +25,10 @@ def import_csv(f_name = "DE.csv", delimeter = ";"):
 
     
     # Plot using Matplotlib all three series on 3 sub plots to see them varying together
-def plot_scatter(DataFrame="conso",x='Actual',y='LDZ'):
+#def plot_scatter(DataFrame="conso",x='Actual',y='LDZ'):
     
-    pd.DataFrame.plot(DataFrame)
-    plt.show()
+#    DataFrame.plot.scatter(x="Date (CET)", y="LDZ", alpha=0.5, s=0.7)
+ #   plt.show()
 
     # Do not forget to add a legend and a title to the plot
 
@@ -91,6 +91,7 @@ h_hat = np.empty(len())'''
 
 if __name__ == '__main__':
     set_wd()
-    conso=import_csv()
-    plot_scatter()
+    data=pd.read_csv("DE.csv", sep=";", parse_dates=["Date (CET)"])
+    data.plot.scatter(x="Actual", y="LDZ", alpha=0.5, s=0.7)
+    print(data.head())
     plt.show()
