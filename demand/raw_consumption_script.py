@@ -4,18 +4,32 @@ from dfply import * # https://github.com/kieferk/dfply#rename
 from scipy.optimize import curve_fit
 from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
+import matplotlib
+import numpy
 import matplotlib.pyplot as plt
 
 #set working directory
+def set_wd(wd="/media/sf_flipo_partage/Documents/IN104/TB/FLIPO_GUILLAUME_GERARD_MATTHIEU_TB/demand"):
+   os.chdir(wd)
+
 
 #1) import consumption data from DE.csv into a pandas DataFrame and rename Date (CET) column to Date
+#This function imports a csv file and has the option to plot its value columns as a function of the first column
+def import_csv(f_name = "DE.csv", delimeter = ";"):
+    data=pd.read_csv(f_name,sep=delimeter)
+    return data 
+
     # The LDZ represents gas consumption in GWh, Actual is the Actual temperature and Normal is the normal temperature
     
     # Try to use dfply pipes to rename
 
-
     
     # Plot using Matplotlib all three series on 3 sub plots to see them varying together
+def plot_scatter(DataFrame="conso",x='Actual',y='LDZ'):
+    
+    pd.DataFrame.plot(DataFrame)
+    plt.show()
+
     # Do not forget to add a legend and a title to the plot
 
 
@@ -33,7 +47,7 @@ import matplotlib.pyplot as plt
 
 
 #2)2. define the consumption function (I give it to you since it is hard to know it without experience)
-
+'''
 #This function takes temperature and 4 other curve shape parameters and returns a value of consumption
 def h(t, a, b, c, d):
     return(d+a/(1+(b/(t-40))**c))
@@ -44,7 +58,7 @@ guess_values= [500, -25, 2, 100]
 #2)3. Fill out this h_hat array with values from the function h
 
 # You will take the 'Actual' column from the DE.csv file as being the input temperature so its length should be the number of rows in the DataFrame imported
-h_hat = np.empty(len())
+h_hat = np.empty(len())'''
 
 
     
@@ -74,3 +88,9 @@ h_hat = np.empty(len())
 #averaged normalized RMSE is RMSE/(average value of real consumption)
 #normalized RMSE is RMSE/(max value of real consumption - min value of real consumption)
 #Any other metric we could use ?
+
+if __name__ == '__main__':
+    set_wd()
+    conso=import_csv()
+    plot_scatter()
+    plt.show()
