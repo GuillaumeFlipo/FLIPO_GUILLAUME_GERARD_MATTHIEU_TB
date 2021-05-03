@@ -33,17 +33,20 @@ def h(t, a, b, c, d):
     return(d+a/(1+(b/(t-40))**c))
     # Do not forget to add a legend and a title to the plot
 
-def consumption_sigmoid(t, real_conso, a = 900, b = -35, c = 6, d = 300, plot = True):
+def consumption_sigmoid(t, DataFrame, a = 770, b = -36, c = 6, d = 100, plot = True):
   
     h_hat = h(t, a, b, c, d)
 
     if plot:
-        plt.plot()
-        #if real_conso is not None you plot it as well
-        if not isinstance(real_conso, type(None)):
-            plt.plot()
-            if(len(t) != len(real_conso)):
-                print("Difference in length between Temperature and Real Consumption vectors")
+        plot_scatter(data)
+        plt.scatter(data.Actual,data.LDZ,color='r',alpha=0.5,s=0.7,label='réelle')
+        plt.title('Comparaison entre la consomation réelle et la sigmoide théorique')
+        plt.plot(t,h_hat, label='théorique')
+        plt.xlabel('temperature (C°)')
+        plt.ylabel('consomation')
+        plt.legend()
+        plt.show()
+        
             # add title and legend and show plot
     return h_hat
     
@@ -104,8 +107,10 @@ h_hat = np.empty(len())'''
 
 if __name__ == '__main__':
     set_wd()
+    plt.close()
     data=import_csv()
-    plot_scatter(data)
+    #plot_scatter(data)
+    t=np.linspace(-20,39,500)
+    consumption_sigmoid(t, data)
     #data.plot.scatter(x="Actual", y="LDZ", alpha=0.5, s=0.7)
-    #print(data.head())
-    plt.show()
+    
