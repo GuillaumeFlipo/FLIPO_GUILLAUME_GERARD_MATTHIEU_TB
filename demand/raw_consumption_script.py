@@ -109,6 +109,9 @@ if __name__ == '__main__':
     set_wd()
     plt.close()
     data=import_csv()
+    # on renomme la colonne date
+    data.rename(columns={'Date (CET)' : 'Date' }, inplace=True)
+    print(data.head())
     #plot_scatter(data)
     t=np.linspace(-20,39,500)
     consumption_sigmoid(t, data)
