@@ -16,7 +16,7 @@ def set_wd(wd="/media/sf_flipo_partage/Documents/IN104/TB/FLIPO_GUILLAUME_GERARD
 #1) import consumption data from DE.csv into a pandas DataFrame and rename Date (CET) column to Date
 #This function imports a csv file and has the option to plot its value columns as a function of the first column
 def import_csv(f_name = "DE.csv", delimeter = ";"):
-    data=pd.read_csv(f_name,sep=delimeter)
+    data=pd.read_csv("DE.csv", sep=";", parse_dates=["Date (CET)"])
     return data 
 
     # The LDZ represents gas consumption in GWh, Actual is the Actual temperature and Normal is the normal temperature
@@ -25,14 +25,27 @@ def import_csv(f_name = "DE.csv", delimeter = ";"):
 
     
     # Plot using Matplotlib all three series on 3 sub plots to see them varying together
-#def plot_scatter(DataFrame="conso",x='Actual',y='LDZ'):
+def plot_scatter(DataFrame):
     
-#    DataFrame.plot.scatter(x="Date (CET)", y="LDZ", alpha=0.5, s=0.7)
- #   plt.show()
-
+    DataFrame.plot.scatter(x="Actual", y="LDZ", alpha=0.5, s=0.7)
+    
+def h(t, a, b, c, d):
+    return(d+a/(1+(b/(t-40))**c))
     # Do not forget to add a legend and a title to the plot
 
+def consumption_sigmoid(t, real_conso, a = 900, b = -35, c = 6, d = 300, plot = True):
+  
+    h_hat = h(t, a, b, c, d)
 
+    if plot:
+        plt.plot()
+        #if real_conso is not None you plot it as well
+        if not isinstance(real_conso, type(None)):
+            plt.plot()
+            if(len(t) != len(real_conso)):
+                print("Difference in length between Temperature and Real Consumption vectors")
+            # add title and legend and show plot
+    return h_hat
     
     # Comment on their variation and their relationships
 
@@ -91,7 +104,8 @@ h_hat = np.empty(len())'''
 
 if __name__ == '__main__':
     set_wd()
-    data=pd.read_csv("DE.csv", sep=";", parse_dates=["Date (CET)"])
-    data.plot.scatter(x="Actual", y="LDZ", alpha=0.5, s=0.7)
-    print(data.head())
+    data=import_csv()
+    plot_scatter(data)
+    #data.plot.scatter(x="Actual", y="LDZ", alpha=0.5, s=0.7)
+    #print(data.head())
     plt.show()
