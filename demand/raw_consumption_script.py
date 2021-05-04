@@ -4,6 +4,7 @@ from dfply import * # https://github.com/kieferk/dfply#rename
 from scipy.optimize import curve_fit
 from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,8 +27,12 @@ def import_csv(f_name = "DE.csv", delimeter = ";"):
     
     # Plot using Matplotlib all three series on 3 sub plots to see them varying together
 def plot_scatter(DataFrame):
-    
-    DataFrame.plot.scatter(x="Actual", y="LDZ", alpha=0.5, s=0.7)
+
+    plt.scatter(data.Actual,data.LDZ,color='blue',alpha=0.5,s=0.7,label='LDZ zn fonction de Actual')
+    plt.scatter(data.Normal,data.LDZ,color='red',alpha=0.5,s=0.7,label='LDZ zn fonction de Normal')
+    #plt.scatter(data.Date,data.LDZ,color='green',alpha=0.5,s=0.7,label='LDZ zn fonction de la date')
+    plt.legend()
+    plt.show()
     
 def h(t, a, b, c, d):
     return(d+a/(1+(b/(t-40))**c))
@@ -40,9 +45,9 @@ def consumption_sigmoid(t, DataFrame,a,b,c,d, plot = True):
 
     if plot:
         
-        plt.scatter(data.Actual,data.LDZ,color='r',alpha=0.5,s=0.7,label='réelle')
+        plt.scatter(data.Actual,data.LDZ,color='blue',alpha=0.5,s=0.7,label='réelle')
         plt.title('Comparaison entre la consomation réelle et la sigmoide théorique')
-        plt.plot(t,h_hat, label='théorique')
+        plt.plot(t,h_hat,color='r',label='théorique')
         plt.xlabel('temperature (C°)')
         plt.ylabel('consommation')
         plt.legend()
@@ -59,6 +64,7 @@ def consumption_sigmoid(t, DataFrame,a,b,c,d, plot = True):
 
     
 def optimize_sigmoid(t,DataFrame,guess):
+
     DataFrame1=DataFrame['Actual']>=-40 
     DataFrame2=DataFrame[DataFrame1]
     conso=DataFrame2['LDZ'].values
@@ -67,6 +73,31 @@ def optimize_sigmoid(t,DataFrame,guess):
     return c
 #2) work on consumption data (non-linear regression)
 #2)1. Plot with a scatter plot the consumption as a function of temperature
+
+
+
+
+def erreur(DataFrame,c):
+
+    DataFrame1=DataFrame['Actual']>=-40
+    DataFrame2=DataFrame[DataFrame1]
+    conso=DataFrame2['LDZ'].values
+    actual=DataFrame2['Actual'].values
+    t=np.linspace(min(actual),max(actual),len(DataFrame2.Actual))
+    h_hat=h(actual,c[0],c[1],c[2],c[3])
+    error=mean_squared_error(conso,h_hat)
+    averageConso=np.average(conso)
+    min_maxConso=max(actual)-min(actual)
+    errorAverage=error/averageConso
+    errorMinMAx=error/min_maxConso
+    print('R2: ',r2_score(conso,h_hat))
+    print('RMSE average normalized: ',errorAverage)
+    print(' normalized RMSE min max: ',errorMinMAx)
+
+
+    
+
+
 
 
 #2)2. define the consumption function (I give it to you since it is hard to know it without experience)
@@ -118,12 +149,21 @@ if __name__ == '__main__':
     data=import_csv()
     # on renomme la colonne date
     data.rename(columns={'Date (CET)' : 'Date' }, inplace=True)
-
-    guess=[770,-36,6,100]
+    # affichage de la consommation en fonction de la température actuel puis celle normal
     #plot_scatter(data)
+    # On définit les coefficient trouver dans un premier temps à la main
+    guess=[770,-36,6,100]
+    # On définit le vecteur température
     t=np.linspace(-20,39,1000)
     
+    
+    # On calcul les coefficients de h grâce à scipy
     c=optimize_sigmoid(t,data,guess,)
+    # affichage de la solution opotimisée
     consumption_sigmoid(t, data,c[0],c[1],c[2],c[3])
-    #data.plot.scatter(x="Actual", y="LDZ", alpha=0.5, s=0.7)
+    # Calcul de l'erreur quadratiqu
+    erreur(data,c)
+   
+
+    
     
