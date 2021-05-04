@@ -33,17 +33,18 @@ def h(t, a, b, c, d):
     return(d+a/(1+(b/(t-40))**c))
     # Do not forget to add a legend and a title to the plot
 
-def consumption_sigmoid(t, DataFrame, a = 770, b = -36, c = 6, d = 100, plot = True):
+def consumption_sigmoid(t, DataFrame,a,b,c,d, plot = True):
   
-    h_hat = h(t, a, b, c, d)
+    h_hat =  h(t, a, b, c, d)
+   
 
     if plot:
-        plot_scatter(data)
+        
         plt.scatter(data.Actual,data.LDZ,color='r',alpha=0.5,s=0.7,label='réelle')
         plt.title('Comparaison entre la consomation réelle et la sigmoide théorique')
         plt.plot(t,h_hat, label='théorique')
         plt.xlabel('temperature (C°)')
-        plt.ylabel('consomation')
+        plt.ylabel('consommation')
         plt.legend()
         plt.show()
         
@@ -57,7 +58,13 @@ def consumption_sigmoid(t, DataFrame, a = 770, b = -36, c = 6, d = 100, plot = T
     # use dfply to transform Date column to DateTime type
 
     
-
+def optimize_sigmoid(t,DataFrame,guess):
+    DataFrame1=DataFrame['Actual']>=-40 
+    DataFrame2=DataFrame[DataFrame1]
+    conso=DataFrame2['LDZ'].values
+    actual=DataFrame2['Actual'].values
+    c,cov=curve_fit(h,actual,conso,guess)
+    return c
 #2) work on consumption data (non-linear regression)
 #2)1. Plot with a scatter plot the consumption as a function of temperature
 
@@ -111,9 +118,12 @@ if __name__ == '__main__':
     data=import_csv()
     # on renomme la colonne date
     data.rename(columns={'Date (CET)' : 'Date' }, inplace=True)
-    print(data.head())
+
+    guess=[770,-36,6,100]
     #plot_scatter(data)
-    t=np.linspace(-20,39,500)
-    consumption_sigmoid(t, data)
+    t=np.linspace(-20,39,1000)
+    
+    c=optimize_sigmoid(t,data,guess,)
+    consumption_sigmoid(t, data,c[0],c[1],c[2],c[3])
     #data.plot.scatter(x="Actual", y="LDZ", alpha=0.5, s=0.7)
     
