@@ -80,5 +80,6 @@ if __name__ == '__main__':
     priceData =importPriceData()
     dfRehen=sheet(dictionaire.sheet_names[0])
     sheet.createColumn(dfRehen)
+    sheet.innerJoin(dfRehen, priceData)
     print(dfRehen.newdf.head())
 
