@@ -8,6 +8,7 @@ from sklearn.metrics import r2_score
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime
 
 
 def set_wd(wd="/media/sf_flipo_partage/Documents/IN104/TB/FLIPO_GUILLAUME_GERARD_MATTHIEU_TB/supply"):
@@ -21,9 +22,10 @@ def import_xlsx(f_name = "storage_data.xlsx", delimeter = ";"):
     return data
 
 def importPriceData(fName='price_data.csv'):
-		priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
-		priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
-		return priceData
+	priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
+	priceData['Date'] = pd.to_datetime(priceData['Date'], dayfirst = True)
+	priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
+	return priceData
 
 
 class fichierExcel:
@@ -38,13 +40,12 @@ class fichierExcel:
 	
 # 	def importPriceData(self,fName='price_data.csv'):
 # 		self.priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
-# 		self.priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
-        
-    def innerJoin(self):
-		self.listDf=list()
+# 		self.priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)    
+	def innerJoin(self,priceData):
+		self.listDf=[]
 		for i in range(len(self.allNameSheet)):
 			self.listDf.append(sheet(self.allNameSheet[i]))
-			self.listDf[i]= self.listDf[i].createColumn()
+			sheet.createColumn(self.listDf[i],priceData)
 
     #def collectAllRegression(self):
 
@@ -67,7 +68,8 @@ class sheet:
 		self.newdf['FSW1']=np.where((self.newdf['full']-45)>0,self.newdf['full']-45,0)
 		self.newdf['FSW2']=np.where((45-self.newdf['full'])>0,45-self.newdf['full'],0)
 		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,X.FSW1,X.FSW2)
-		self.newdf=pd.merge(self.newdf,priceData, on=' gasDayStartedon ')
+		self.newdf['gasDayStartedOn'] = pd.to_datetime(self.newdf['gasDayStartedOn'], dayfirst = True)
+		self.newdf=pd.merge(self.newdf,priceData, on='gasDayStartedOn')
 		
 
 
@@ -82,7 +84,13 @@ if __name__ == '__main__':
     plt.close()
     dictionaire=import_xlsx()
     priceData =importPriceData()
+    print(priceData.head())
     dfRehen=sheet(dictionaire.sheet_names[0])
-    sheet.createColumn(dfRehen)
-    sheet.innerJoin(dfRehen, priceData)
-    print(dfRehen.newdf.head())
+    sheet.createColumn(dfRehen,priceData)
+    
+    # fichier=fichierExcel(dictionaire.sheet_names)
+    # fichierExcel.innerJoin(fichier,priceData)
+    # for i in range(len(dictionaire.sheet_names)):
+    # 	print(fichier.allNameSheet[i], '\n',fichier.listDf[i].newdf.head(10))
+
+    print(dfRehen.newdf.head(10))
