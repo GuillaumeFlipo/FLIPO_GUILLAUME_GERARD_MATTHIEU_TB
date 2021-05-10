@@ -57,6 +57,9 @@ class sheet:
 		self.newdf['FSW1']=np.where((self.newdf['full']-45)>0,self.newdf['full']-45,0)
 		self.newdf['FSW2']=np.where((45-self.newdf['full'])>0,45-self.newdf['full'],0)
 		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,FSW1,FSW2)
+		
+	def innerJoin(self):
+		self.df=pd.merge(self.df,data, on=' gasDayStartedon ')
 
 
 	#def regressionLogistique(self,):
