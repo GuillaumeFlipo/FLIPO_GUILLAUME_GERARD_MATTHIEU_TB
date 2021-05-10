@@ -59,7 +59,7 @@ class sheet:
 		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,FSW1,FSW2)
 		
 	def innerJoin(self):
-		self.df=pd.merge(self.df,data, on=' gasDayStartedon ')
+		self.df=pd.merge(self.df,priceData, on=' gasDayStartedon ')
 
 
 	#def regressionLogistique(self,):
