@@ -40,6 +40,11 @@ class fichierExcel:
 # 		self.priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
 # 		self.priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
         
+    def innerJoin(self):
+		self.listDf=list()
+		for i in range(len(self.allNameSheet)):
+			self.listDf.append(sheet(self.allNameSheet[i]))
+			self.listDf[i]= self.listDf[i].createColumn()
 
     #def collectAllRegression(self):
 
@@ -53,7 +58,7 @@ class sheet:
 		self.df=pd.read_excel(dictionaire,dataFrameName)
 		self.len=len(self.df.full)
 
-	def createColumn(self):
+	def createColumn(self,priceData):
 		
 		self.newdf=self.df >> select(X.gasDayStartedOn,X.full,X.injection,X.withdrawal)
 		self.newdf['NW']=self.newdf['withdrawal']-self.newdf['injection']
@@ -61,10 +66,9 @@ class sheet:
 		self.newdf['Nwithdrawal_binary'] = np.where(self.newdf['NW']>0, 1, 0)
 		self.newdf['FSW1']=np.where((self.newdf['full']-45)>0,self.newdf['full']-45,0)
 		self.newdf['FSW2']=np.where((45-self.newdf['full'])>0,45-self.newdf['full'],0)
-		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,FSW1,FSW2)
+		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,X.FSW1,X.FSW2)
+		self.newdf=pd.merge(self.newdf,priceData, on=' gasDayStartedon ')
 		
-	def innerJoin(self,priceData):
-		self.df=pd.merge(self.df,priceData, on=' gasDayStartedon ')
 
 
 	#def regressionLogistique(self,):
