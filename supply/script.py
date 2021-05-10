@@ -24,9 +24,10 @@ def import_xlsx(f_name = "storage_data.xlsx", delimeter = ";"):
 class fichierExcel:
 
 	def __init__(self, fichier):
+		self.ficher=dict()
 		self.allNameSheet=fichier
-		self.dictionaire1=dict()
-		self.dictionaire2=dict()
+		self.dictionnaire1={}
+		self.dictionnaire2={}
     # Import now the price_data.csv file it has 4 columns
 # Change the name of the Date column to gasDayStartedon (just like the name in the storage_data.xlsx)
 # The other columns represent the time spread columns
@@ -35,6 +36,14 @@ class fichierExcel:
 		self.priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
 		self.priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
         
+
+	def innerJoin(self):
+		for i in range(len(self.allNameSheet)):
+			self.dictionnaire1[self.allNameSheet[i]] = sheet(self.allNameSheet[i])
+
+		
+
+
 
     #def collectAllRegression(self):
 
@@ -45,7 +54,7 @@ class fichierExcel:
 class sheet:
 
 	def __init__(self, dataFrameName):
-		self.df=pd.read_excel(dictionaire,dataFrameName)
+		self.df=pd.read_excel(dictionnaire,dataFrameName)
 		self.len=len(self.df.full)
 
 	def createColumn(self):
@@ -56,7 +65,7 @@ class sheet:
 		self.newdf['Nwithdrawal_binary'] = np.where(self.newdf['NW']>0, 1, 0)
 		self.newdf['FSW1']=np.where((self.newdf['full']-45)>0,self.newdf['full']-45,0)
 		self.newdf['FSW2']=np.where((45-self.newdf['full'])>0,45-self.newdf['full'],0)
-		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,FSW1,FSW2)
+		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,X.FSW1,X.FSW2)
 
 
 	#def regressionLogistique(self,):
@@ -68,8 +77,14 @@ class sheet:
 if __name__ == '__main__':
     set_wd()
     plt.close()
-    dictionaire=import_xlsx()
-    dfRehen=sheet(dictionaire.sheet_names[0])
+    dictionnaire=import_xlsx()
+    # print(type(dictionnaire))
+    # dictionnaireBis=fichierExcel()
+    dfRehen=sheet(dictionnaire.sheet_names[0])
     sheet.createColumn(dfRehen)
-    print(dfRehen.newdf.head())
+    fichier=fichierExcel(dictionnaire.sheet_names)
+    fichier.innerJoin()
+
+    print(fichier.dictionnaire1)
+    # print(dfRehen.newdf.head())
 
