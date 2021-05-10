@@ -20,6 +20,11 @@ def import_xlsx(f_name = "storage_data.xlsx", delimeter = ";"):
     data=pd.ExcelFile(f_name)
     return data
 
+def importPriceData(fName='price_data.csv'):
+		priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
+		priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
+		return priceData
+
 
 class fichierExcel:
 
@@ -31,9 +36,9 @@ class fichierExcel:
 # Change the name of the Date column to gasDayStartedon (just like the name in the storage_data.xlsx)
 # The other columns represent the time spread columns
 	
-	def importPriceData(self,fName='price_data.csv'):
-		self.priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
-		self.priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
+# 	def importPriceData(self,fName='price_data.csv'):
+# 		self.priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
+# 		self.priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
         
 
     #def collectAllRegression(self):
@@ -58,7 +63,7 @@ class sheet:
 		self.newdf['FSW2']=np.where((45-self.newdf['full'])>0,45-self.newdf['full'],0)
 		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,FSW1,FSW2)
 		
-	def innerJoin(self):
+	def innerJoin(self,priceData):
 		self.df=pd.merge(self.df,priceData, on=' gasDayStartedon ')
 
 
@@ -72,6 +77,7 @@ if __name__ == '__main__':
     set_wd()
     plt.close()
     dictionaire=import_xlsx()
+    priceData =importPriceData()
     dfRehen=sheet(dictionaire.sheet_names[0])
     sheet.createColumn(dfRehen)
     print(dfRehen.newdf.head())
