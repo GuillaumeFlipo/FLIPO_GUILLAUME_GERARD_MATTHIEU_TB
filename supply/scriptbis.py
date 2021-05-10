@@ -20,31 +20,36 @@ def import_xlsx(f_name = "storage_data.xlsx", delimeter = ";"):
     data=pd.ExcelFile(f_name)
     return data
 
-def importPriceData(fName='price_data.csv'):
-		priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
-		priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
-		return priceData
-
 
 class fichierExcel:
 
-	def __init__(self, fichier):
+	def __init__(self, fichier,dictionnaire):
 		self.allNameSheet=fichier
-		self.dictionaire1=dict()
-		self.dictionaire2=dict()
+		self.dictionnaire=dictionnaire
+		# self.dictionnaire1={}
+		# self.dictionnaire2={}
     # Import now the price_data.csv file it has 4 columns
 # Change the name of the Date column to gasDayStartedon (just like the name in the storage_data.xlsx)
 # The other columns represent the time spread columns
 	
-# 	def importPriceData(self,fName='price_data.csv'):
-# 		self.priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
-# 		self.priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
+	def importPriceData(self,fName='price_data.csv'):
+		self.priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
+		self.priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
         
-    def innerJoin(self):
+
+	def innerJoin(self):
 		self.listDf=list()
 		for i in range(len(self.allNameSheet)):
+
 			self.listDf.append(sheet(self.allNameSheet[i]))
 			self.listDf[i]= self.listDf[i].createColumn()
+			
+
+			
+
+		
+
+
 
     #def collectAllRegression(self):
 
@@ -55,10 +60,10 @@ class fichierExcel:
 class sheet:
 
 	def __init__(self, dataFrameName):
-		self.df=pd.read_excel(dictionaire,dataFrameName)
+		self.df=pd.read_excel(dictionnaire,dataFrameName)
 		self.len=len(self.df.full)
 
-	def createColumn(self,priceData):
+	def createColumn(self):
 		
 		self.newdf=self.df >> select(X.gasDayStartedOn,X.full,X.injection,X.withdrawal)
 		self.newdf['NW']=self.newdf['withdrawal']-self.newdf['injection']
@@ -67,8 +72,7 @@ class sheet:
 		self.newdf['FSW1']=np.where((self.newdf['full']-45)>0,self.newdf['full']-45,0)
 		self.newdf['FSW2']=np.where((45-self.newdf['full'])>0,45-self.newdf['full'],0)
 		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,X.FSW1,X.FSW2)
-		self.newdf=pd.merge(self.newdf,priceData, on=' gasDayStartedon ')
-		
+		self.newdf= 
 
 
 	#def regressionLogistique(self,):
@@ -80,9 +84,14 @@ class sheet:
 if __name__ == '__main__':
     set_wd()
     plt.close()
-    dictionaire=import_xlsx()
-    priceData =importPriceData()
-    dfRehen=sheet(dictionaire.sheet_names[0])
+    dictionnaire=import_xlsx()
+    # print(type(dictionnaire))
+    # dictionnaireBis=fichierExcel()
+    dfRehen=sheet(dictionnaire.sheet_names[0])
     sheet.createColumn(dfRehen)
-    sheet.innerJoin(dfRehen, priceData)
-    print(dfRehen.newdf.head())
+    fichier=fichierExcel(dictionnaire.sheet_names)
+    fichier.innerJoin()
+
+    print(fichier.dictionnaire1)
+    # print(dfRehen.newdf.head())
+
