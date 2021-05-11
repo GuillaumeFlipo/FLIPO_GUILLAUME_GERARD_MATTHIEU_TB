@@ -7,12 +7,13 @@ from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, recall_score, precision_score, roc_auc_score
 from sklearn.linear_model import LogisticRegression
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
-import datetime
+from sklearn.ensemble import RandomForestClassifier
+
 
 
 def set_wd(wd="/media/sf_flipo_partage/Documents/IN104/TB/FLIPO_GUILLAUME_GERARD_MATTHIEU_TB/supply"):
@@ -77,14 +78,47 @@ class sheet:
 		
 
 
-	def regressionLogistique(self,):
-		self.X = self.newdf >> select(X.Nwithdrawal_binary)
-		self.Y = self.newdf >> select(X.NW,X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
-		self.X = np.array(self.X)
-		self.Y = np.array(self.Y)
-		self.x_train,self.x_test,self.y_train,self.y_test=train_test_split(x,y,random_state=1)
+	def regressionLogistique(self):
 
-	#def regressionRandom(self,):
+		self.Y = self.newdf >> select(X.Nwithdrawal_binary)
+		self.X = self.newdf >> select(X.NW,X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
+		self.Xarray = np.array(self.X)
+		self.Yarray = np.array(self.Y['Nwithdrawal_binary'])
+		self.x_train,self.x_test,self.y_train,self.y_test=train_test_split(self.Xarray,self.Yarray,random_state=1)
+		self.lr = LogisticRegression()
+		self.lr.fit(self.x_train,self.y_train)
+		self.y_predLogistique=self.lr.predict(self.x_test)
+		# print(self.lr.coef_)
+		# print(self.lr.intercept_)
+		self.confusion=confusion_matrix(self.y_test,self.y_predLogistique)
+		# print(self.confusion)
+		self.probs=self.lr.predict_proba(self.x_test)[:,1]
+		cm=self.confusion
+		self.dictMetricLogistique={'recall': recall_score(self.y_test, self.y_predLogistique), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predLogistique), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs)}
+		print(self.dictMetricLogistique)
+
+
+
+
+	def regressionRandom(self):
+
+		self.Y = self.newdf >> select(X.Nwithdrawal_binary)
+		self.X = self.newdf >> select(X.NW,X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
+		self.Xarray = np.array(self.X)
+		self.Yarray = np.array(self.Y['Nwithdrawal_binary'])
+		self.x_train,self.x_test,self.y_train,self.y_test=train_test_split(self.Xarray,self.Yarray,random_state=1)
+		self.rm=RandomForestClassifier(random_state=1)
+		self.rm.fit(self.x_train,self.y_train)
+		self.y_predRandom=self.rm.predict(self.x_test)
+		self.confusion=confusion_matrix(self.y_test,self.y_predRandom)
+		self.probs=self.rm.predict_proba(self.x_test)[:,1]
+		cm=self.confusion
+		self.dictMetricRandom={'recall': recall_score(self.y_test, self.y_predRandom), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predRandom), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs)}
+		print(self.dictMetricRandom)
+
+
+
+
 
 	#def bestRegression(self,)
  
@@ -100,5 +134,5 @@ if __name__ == '__main__':
     # fichierExcel.innerJoin(fichier,priceData)
     # for i in range(len(dictionaire.sheet_names)):
     # 	print(fichier.allNameSheet[i], '\n',fichier.listDf[i].newdf.head(10))
-
-    print(dfRehen.newdf.head(10))
+    sheet.regressionLogistique(dfRehen)
+    sheet.regressionRandom(dfRehen)
