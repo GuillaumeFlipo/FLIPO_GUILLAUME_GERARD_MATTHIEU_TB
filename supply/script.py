@@ -1,3 +1,4 @@
+
 import pandas as pd
 import os
 from dfply import * # https://github.com/kieferk/dfply#rename
@@ -5,6 +6,9 @@ from scipy.optimize import curve_fit
 from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+from sklearn.linear_model import LogisticRegression
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,8 +26,8 @@ def import_xlsx(f_name = "storage_data.xlsx", delimeter = ";"):
     return data
 
 def importPriceData(fName='price_data.csv'):
-	priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
-	priceData['Date'] = pd.to_datetime(priceData['Date'], dayfirst = True)
+	priceData=pd.read_csv(fName, sep=";")
+	priceData=priceData.dropna() >> mutate(Date = pd.to_datetime(priceData['Date'], format = "%d/%m/%Y"))
 	priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)
 	return priceData
 
@@ -57,6 +61,7 @@ class sheet:
 
 	def __init__(self, dataFrameName):
 		self.df=pd.read_excel(dictionaire,dataFrameName)
+		self.dfname=dataFrameName
 		self.len=len(self.df.full)
 
 	def createColumn(self,priceData):
@@ -68,12 +73,16 @@ class sheet:
 		self.newdf['FSW1']=np.where((self.newdf['full']-45)>0,self.newdf['full']-45,0)
 		self.newdf['FSW2']=np.where((45-self.newdf['full'])>0,45-self.newdf['full'],0)
 		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,X.FSW1,X.FSW2)
-		self.newdf['gasDayStartedOn'] = pd.to_datetime(self.newdf['gasDayStartedOn'], dayfirst = True)
 		self.newdf=pd.merge(self.newdf,priceData, on='gasDayStartedOn')
 		
 
 
-	#def regressionLogistique(self,):
+	def regressionLogistique(self,):
+		self.X = self.newdf >> select(X.Nwithdrawal_binary)
+		self.Y = self.newdf >> select(X.NW,X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
+		self.X = np.array(self.X)
+		self.Y = np.array(self.Y)
+		self.x_train,self.x_test,self.y_train,self.y_test=train_test_split(x,y,random_state=1)
 
 	#def regressionRandom(self,):
 
@@ -84,7 +93,6 @@ if __name__ == '__main__':
     plt.close()
     dictionaire=import_xlsx()
     priceData =importPriceData()
-    print(priceData.head())
     dfRehen=sheet(dictionaire.sheet_names[0])
     sheet.createColumn(dfRehen,priceData)
     
