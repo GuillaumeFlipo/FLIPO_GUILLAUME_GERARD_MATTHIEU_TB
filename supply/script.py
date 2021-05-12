@@ -101,9 +101,9 @@ class sheet:
 		# print(self.lr.intercept_)
 		self.confusion_lr=confusion_matrix(self.y_test,self.y_predLogistique)
 		# print(self.confusion)
-		self.probs=self.lr.predict_proba(self.x_test)[:,1]
+		self.probs_rm=self.lr.predict_proba(self.x_test)[:,1]
 		cm=self.confusion_lr
-		self.dictMetricLogistique={'recall': recall_score(self.y_test, self.y_predLogistique), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predLogistique), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs)}
+		self.dictMetricLogistique={'recall': recall_score(self.y_test, self.y_predLogistique), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predLogistique), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs_lr)}
 		print(self.dictMetricLogistique)
 
 
@@ -120,9 +120,9 @@ class sheet:
 		self.rm.fit(self.x_train,self.y_train)
 		self.y_predRandom=self.rm.predict(self.x_test)
 		self.confusion_rm=confusion_matrix(self.y_test,self.y_predRandom)
-		self.probs=self.rm.predict_proba(self.x_test)[:,1]
+		self.probs_rm=self.rm.predict_proba(self.x_test)[:,1]
 		cm=self.confusion_rm
-		self.dictMetricRandom={'recall': recall_score(self.y_test, self.y_predRandom), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predRandom), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs)}
+		self.dictMetricRandom={'recall': recall_score(self.y_test, self.y_predRandom), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predRandom), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs_rm)}
 		print(self.dictMetricRandom)
 
 
