@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 
-def set_wd(wd="/media/sf_flipo_partage/Documents/IN104/TB/FLIPO_GUILLAUME_GERARD_MATTHIEU_TB/supply"):
+def set_wd(wd="C:/Users/Eliot Tabet/Desktop/ENSTA/"):
    os.chdir(wd)
 
 
@@ -24,7 +24,9 @@ def set_wd(wd="/media/sf_flipo_partage/Documents/IN104/TB/FLIPO_GUILLAUME_GERARD
 #This function imports a csv file and has the option to plot its value columns as a function of the first column
 def import_xlsx(f_name = "storage_data.xlsx", delimeter = ";"):
     data=pd.ExcelFile(f_name)
-    return data
+    SheetNameList = data.sheet_names
+    storage_data = {sheet: data.parse(sheet) for sheet in SheetNameList}
+    return storage_data
 
 def importPriceData(fName='price_data.csv'):
 	priceData=pd.read_csv(fName, sep=";")
@@ -34,43 +36,26 @@ def importPriceData(fName='price_data.csv'):
 
 
 class fichierExcel:
-
-	def __init__(self, fichier):
-		self.allNameSheet=fichier
-		self.dictionaire1=dict()
-		self.dictionaire2=dict()
-    # Import now the price_data.csv file it has 4 columns
-# Change the name of the Date column to gasDayStartedon (just like the name in the storage_data.xlsx)
-# The other columns represent the time spread columns
-	
-# 	def importPriceData(self,fName='price_data.csv'):
-# 		self.priceData=pd.read_csv(fName, sep=";", parse_dates=["Date"])
-# 		self.priceData.rename(columns={'Date' : 'gasDayStartedOn' }, inplace=True)    
-	# def innerJoin(self,priceData):
-	# 	self.listDf=[]
-	# 	for i in range(len(self.allNameSheet)):
-	# 		self.listDf.append(sheet(self.allNameSheet[i]))
-	# 		sheet.createColumn(self.listDf[i],priceData)
-	def collectAllRegression(self,priceData):
-		self.listSheet=[]
-		for i in range(len(self.allNameSheet)):
-			self.listSheet.append(sheet(self.allNameSheet[i]))
-			sheet.createColumn(self.listSheet[i],priceData)
-			sheet.regressionLogistique(self.listSheet[i])
-			sheet.regressionRandom(self.listSheet[i])
-
-
-
-
-
-	#def bestOverAllregression(self):
+   def __init__(self, fichier):
+      self.allNameSheet=fichier.keys()
+      self.d = fichier
+      self.dictionaire1=dict()
+      self.dictionaire2=dict()
+      
+   def collectAllRegression(self,priceData):
+      for i in self.allNameSheet:
+         f = self.d[i]
+         st = sheet(i, f)
+         st.createColumn(priceData)
+         st.regressionLogistique()
+         st.regressionRandom()
 
 	
 
 class sheet:
 
-	def __init__(self, dataFrameName):
-		self.df=pd.read_excel(dictionaire,dataFrameName)
+	def __init__(self, dataFrameName, storage_data):
+		self.df = storage_data
 		self.dfname=dataFrameName
 		self.len=len(self.df.full)
 
@@ -89,21 +74,19 @@ class sheet:
 
 	def regressionLogistique(self):
 
-		self.Y = self.newdf >> select(X.Nwithdrawal_binary)
-		self.X = self.newdf >> select(X.NW,X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
-		self.Xarray = np.array(self.X)
-		self.Yarray = np.array(self.Y['Nwithdrawal_binary'])
-		self.x_train,self.x_test,self.y_train,self.y_test=train_test_split(self.Xarray,self.Yarray,random_state=1)
+		self.Y = self.newdf.Nwithdrawal_binary
+		self.X = self.newdf >> select(X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
+		self.x_train_lr, self.x_test_lr,self.y_train_lr,self.y_test_lr=train_test_split(self.X,self.Y)
 		self.lr = LogisticRegression()
-		self.lr.fit(self.x_train,self.y_train)
-		self.y_predLogistique=self.lr.predict(self.x_test)
+		self.lr.fit(self.x_train_lr,self.y_train_lr)
+		self.y_predLogistique=self.lr.predict(self.x_test_lr)
 		# print(self.lr.coef_)
 		# print(self.lr.intercept_)
-		self.confusion_lr=confusion_matrix(self.y_test,self.y_predLogistique)
+		self.confusion_lr=confusion_matrix(self.y_test_lr,self.y_predLogistique)
 		# print(self.confusion)
-		self.probs_rm=self.lr.predict_proba(self.x_test)[:,1]
+		self.probs_lr=self.lr.predict_proba(self.x_test_lr)[:,1]
 		cm=self.confusion_lr
-		self.dictMetricLogistique={'recall': recall_score(self.y_test, self.y_predLogistique), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predLogistique), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs_lr)}
+		self.dictMetricLogistique={'recall': recall_score(self.y_test_lr, self.y_predLogistique), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test_lr, self.y_predLogistique), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test_lr, self.probs_lr)}
 		print(self.dictMetricLogistique)
 
 
@@ -111,12 +94,8 @@ class sheet:
 
 	def regressionRandom(self):
 
-		self.Y = self.newdf >> select(X.Nwithdrawal_binary)
-		self.X = self.newdf >> select(X.NW,X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
-		self.Xarray = np.array(self.X)
-		self.Yarray = np.array(self.Y['Nwithdrawal_binary'])
-		self.x_train,self.x_test,self.y_train,self.y_test=train_test_split(self.Xarray,self.Yarray,random_state=1)
-		self.rm=RandomForestClassifier()
+		self.x_train,self.x_test,self.y_train,self.y_test=train_test_split(self.X,self.Y)
+		self.rm=RandomForestClassifier(n_estimators=500, bootstrap = True, max_features = 'sqrt')
 		self.rm.fit(self.x_train,self.y_train)
 		self.y_predRandom=self.rm.predict(self.x_test)
 		self.confusion_rm=confusion_matrix(self.y_test,self.y_predRandom)
@@ -133,7 +112,6 @@ class sheet:
  
 if __name__ == '__main__':
     set_wd()
-    plt.close()
     dictionaire=import_xlsx()
     priceData =importPriceData()
     # dfRehen=sheet(dictionaire.sheet_names[0])
@@ -141,8 +119,8 @@ if __name__ == '__main__':
     # sheet.createColumn(dfRehen,priceData)
     # sheet.createColumn(df2,priceData)
     
-    fichier=fichierExcel(dictionaire.sheet_names)
-    fichierExcel.collectAllRegression(fichier,priceData)
+    fichier=fichierExcel(dictionaire)
+    fichier.collectAllRegression(priceData)
     # for i in range(len(dictionaire.sheet_names)):
     # 	print(fichier.allNameSheet[i], '\n',fichier.listDf[i].newdf.head(10))
     # sheet.regressionLogistique(dfRehen)
