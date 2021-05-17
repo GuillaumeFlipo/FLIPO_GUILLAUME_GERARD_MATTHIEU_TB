@@ -103,6 +103,24 @@ class sheet:
 		cm=self.confusion_rm
 		self.dictMetricRandom={'recall': recall_score(self.y_test, self.y_predRandom), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predRandom), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs_rm)}
 		print(self.dictMetricRandom)
+		
+		
+	def regressionLineaire(self):
+		
+		self.x_train_lnr, self.x_test_lnr,self.y_train_lnr,self.y_test_lnr=train_test_split(self.X,self.Y)
+		self.lnr = LinearRegression()
+		self.lnr.fit(self.x_train_lnr,self.y_train_lnr)
+		self.y_predLinear=self.lnr.predict(self.x_test_lnr)
+		#self.confusion_lnr=confusion_matrix(self.y_test_lnr,self.y_predLinear)
+		#self.probs_lnr=self.lnr.predict_proba(self.x_test_lnr)[:,1]
+		#cm=self.confusion_lnr
+		self.rmse=mean_squared_error(self.y_test_lnr, self.y_predLinear)
+		self.average=np.average(self.y_test_lnr)
+		self.anrmse=self.error/self.average
+		self.min_max=max(actual)-min(actual) #je ne vois pas quelle colonne sélectionner...
+		self.nrmse=self.error/self.min_max
+		self.dictMetricLinear={'r2': r2_score(self.y_test_lnr, self.y_predLinear), 'rmse': self.rmse, 'nrmse': self.nrmse, 'anrmse': self.anrmse, 'cor': corr}
+		print(self.dictMetricLinear)
 
 
 
