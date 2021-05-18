@@ -16,8 +16,8 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 
-def set_wd(wd="C:/Users/Eliot Tabet/Desktop/ENSTA/"):
-   os.chdir(wd)
+# def set_wd(wd="C:/Users/Eliot Tabet/Desktop/ENSTA/"):
+#    os.chdir(wd)
 
 
 #1) import consumption data from DE.csv into a pandas DataFrame and rename Date (CET) column to Date
@@ -111,19 +111,11 @@ class sheet:
 	#def bestRegression(self,)
  
 if __name__ == '__main__':
-    set_wd()
+    # set_wd()
     dictionaire=import_xlsx()
     priceData =importPriceData()
-    # dfRehen=sheet(dictionaire.sheet_names[0])
-    # df2=sheet(dictionaire.sheet_names[1])
-    # sheet.createColumn(dfRehen,priceData)
-    # sheet.createColumn(df2,priceData)
+    print(dictionaire)
+        
+    # fichier=fichierExcel(dictionaire)
+    # fichier.collectAllRegression(priceData)
     
-    fichier=fichierExcel(dictionaire)
-    fichier.collectAllRegression(priceData)
-    # for i in range(len(dictionaire.sheet_names)):
-    # 	print(fichier.allNameSheet[i], '\n',fichier.listDf[i].newdf.head(10))
-    # sheet.regressionLogistique(dfRehen)
-    # sheet.regressionRandom(dfRehen)
-    # sheet.regressionLogistique(df2)
-    # sheet.regressionRandom(df2)
