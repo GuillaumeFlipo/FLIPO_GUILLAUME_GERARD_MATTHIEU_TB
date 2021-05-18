@@ -116,7 +116,7 @@ class sheet:
 		#cm=self.confusion_lnr
 		self.rmse=mean_squared_error(self.y_test_lnr, self.y_predLinear)
 		self.average=np.average(self.y_test_lnr)
-		self.anrmse=self.error/self.average
+		self.anrmse=self.rmse/self.average
 		self.min_max=max(actual)-min(actual) #je ne vois pas quelle colonne sélectionner...
 		self.nrmse=self.error/self.min_max
 		self.dictMetricLinear={'r2': r2_score(self.y_test_lnr, self.y_predLinear), 'rmse': self.rmse, 'nrmse': self.nrmse, 'anrmse': self.anrmse, 'cor': corr}
