@@ -45,6 +45,8 @@ class fichierExcel:
       self.listSheet=[]
       
    def collectAllRegression(self,priceData):
+   		self.compteurRandom = 0;
+   		self.compteurLogistique = 0;
    		for i in self.allNameSheet:
    			f = self.d[i]
    			st = sheet(i, f)
@@ -52,8 +54,23 @@ class fichierExcel:
    			st.regressionLogistique()
    			st.regressionRandom()
    			st.regressionLineaire()
+   			if (st.bestRegression()=="random"):
+   				self.compteurRandom+=1
+   			else:
+   				self.compteurLogistique+=1
    			self.listSheet.append(st)
-   		print(self.listSheet[0].y_test_lnr)
+   		if (self.compteurLogistique>=self.compteurRandom):
+   			print("Best regression is RandomForest")
+
+   	# def bestRegressionOverAll(self):
+   	# 	self.compteurRandom = 0;
+   	# 	self.compteurLogistique = 0;
+   	# 	for i in self.allNameSheet:
+
+
+
+
+   		
    		
 
 	
@@ -143,36 +160,36 @@ class sheet:
 		c1=0 #on définit un compteur pour la régression logistique
 		c2=0 #on définit un compteur pour la random forest
 
-		v1= self.dictMetricLogistique.recall
-		v2= self.dictMetricRandom.recall
+		v1= self.dictMetricLogistique['recall']
+		v2= self.dictMetricRandom['recall']
 		if v1<v2:
 			c2+=1
 		else : 
 			c1+=1
 
-		v1= self.dictMetricLogistique.neg_recall
-		v2= self.dictMetricRandom.neg_recall
+		v1= self.dictMetricLogistique['neg_recall']
+		v2= self.dictMetricRandom['neg_recall']
 		if v1<v2:
 			c2+=1
 		else : 
 			c1+=1
 
-		v1= self.dictMetricLogistique.precision
-		v2= self.dictMetricRandom.precision
+		v1= self.dictMetricLogistique['precision']
+		v2= self.dictMetricRandom['precision']
 		if v1<v2:
 			c2+=1
 		else : 
 			c1+=1
 
-		v1= self.dictMetricLogistique.neg_precision
-		v2= self.dictMetricRandom.neg_precision
+		v1= self.dictMetricLogistique['neg_precision']
+		v2= self.dictMetricRandom['neg_precision']
 		if v1<v2:
 			c2+=1
 		else : 
 			c1+=1
 
-		v1= self.dictMetricLogistique.roc
-		v2= self.dictMetricRandom.roc
+		v1= self.dictMetricLogistique['roc']
+		v2= self.dictMetricRandom['roc']
 		if v1<v2:
 			c2+=1
 		else : 
@@ -180,9 +197,9 @@ class sheet:
 
 		#On compare les deux modèles
 		if c1>=c2:
-			print("la régression logistique est meilleure que la random forest")
+			return "logistique"
 		else: 
-			print("la random forest est meilleure que la régression logistique")
+			return "forest"
  
 if __name__ == '__main__':
     # set_wd()
