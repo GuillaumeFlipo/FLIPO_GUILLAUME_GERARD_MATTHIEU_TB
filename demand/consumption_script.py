@@ -15,11 +15,9 @@ def set_wd(wd="/media/sf_flipo_partage/Documents/IN104/TB/FLIPO_GUILLAUME_GERARD
 
 #This function imports a csv file and has the option to plot its value columns as a function of the first column
 def import_csv(f_name = "DE.csv", delimeter = ";"):
-    f = pd.read_csv(f_name,sep=delimeter)
+    f = data=pd.read_csv("DE.csv", sep=";", parse_dates=["Date (CET)"])
     f.rename(columns={'Date (CET)' : 'Date' }, inplace=True)
-    # if plot == True:
-    #     scatter_plot(f)
-    return f >> mutate(Date = pd.to_datetime(f['Date']))
+    return f.dropna()
 
 #This function creates a scatter plot given a DataFrame and an x and y column
 def scatter_plot(dataframe):
@@ -94,8 +92,7 @@ class consumption:
     #This is what the class print if you use the print function on it
     def __str__(self):
         
-        return "test"
-
+        return 
 #The following class optimizes the parameters of the sigmoid and returns an object of class consumption
 class optimize_sigmoid:
     #Initialize guess values that are common to all instances of the clasee
@@ -105,7 +102,7 @@ class optimize_sigmoid:
         if isinstance(f, pd.DataFrame):
             if 'Actual' and 'LDZ' in f.columns:
                 self.__f=f
-                self.guess=[770,-36,6,100]
+                self.guess=[500, -25, 2, 100]
                 self.t = np.linspace(min(self.__f['Actual'].values),max(self.__f['Actual'].values),len(self.__f.Actual))
 
                 
@@ -117,7 +114,7 @@ class optimize_sigmoid:
     #optimize and return metrics use functions h, consumption_sigmoid defined above as well as get_fit_metrics
     def optimize(self):
         if self.__f is not None:
-            self.__coef, self.__cov = curve_fit(h,self.__f['Actual'],self.__f['LDZ'],self.guess)
+            self.__coef, self.__cov = curve_fit(h,self.__f['Actual'].values,self.__f['LDZ'].values,self.guess)
             
             s = consumption_sigmoid(self.t, self.__f,self.__coef[0], self.__coef[1], self.__coef[2], self.__coef[3],True)
             
@@ -147,7 +144,22 @@ class optimize_sigmoid:
             t = "optimize method is not yet run"
         return t
 
+    def getCoeff(self):
+        if self.__coef is not None:
+            return self.__coef
+
 #If you have filled correctly the following code will run without an issue        
+class requirement:
+    def __init__(self):
+        self.dict=dict()
+
+    def createDict(self,sig):
+        self.dict={'A' : [sig.getCoeff()[0]],'B' : [sig.getCoeff()[1]],'C' : [sig.getCoeff()[2]],'D' : [sig.getCoeff()[3]]}
+        self.dict['corr']= [sig.fit_metrics()[0]]
+        self.dict['rmse']= [sig.fit_metrics()[1]]
+        self.dict['nrmse']= [sig.fit_metrics()[2]]
+        self.dict['armse']= [sig.fit_metrics()[3]]
+        print(pd.DataFrame(data=self.dict))
 
 if __name__ == '__main__':
 
@@ -156,7 +168,7 @@ if __name__ == '__main__':
 
     #1) import consumption data and plot it
     conso = import_csv()
-    print(conso.head)
+    print(conso.head())
 
 
     #2) work on consumption data (non-linear regression)
@@ -167,15 +179,18 @@ if __name__ == '__main__':
     #2)2. optimize the parameters
     sig = optimize_sigmoid(conso)
     sig.optimize()
+    # print(sig.fit_metrics())
     c = sig.create_consumption()
     print(sig)
+    print(sig.getCoeff())
+    print(sig.guess)
 
 
-    #2)3. check the new fit
+    # #2)3. check the new fit
 
-    # These are the 3 ways to access a protected attribute, it works the same for a protected method
-    # An attribute/method is protected when it starts with 2 underscores "__"
-    # Protection is good to not falsy create change
+    # # These are the 3 ways to access a protected attribute, it works the same for a protected method
+    # # An attribute/method is protected when it starts with 2 underscores "__"
+    # # Protection is good to not falsy create change
     
     print(
             [
@@ -206,7 +221,8 @@ if __name__ == '__main__':
     
     print(sig.fit_metrics())
     c.sigmoid(True)
-    print(c)
+    solution = requirement()
+    solution.createDict(sig)
     
     #3) If time allows do TSA on actual temperature
     #3)1. Check trend (and Remove it)
