@@ -13,6 +13,7 @@ import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression
 
 
 
@@ -41,14 +42,19 @@ class fichierExcel:
       self.d = fichier
       self.dictionaire1=dict()
       self.dictionaire2=dict()
+      self.listSheet=[]
       
    def collectAllRegression(self,priceData):
-      for i in self.allNameSheet:
-         f = self.d[i]
-         st = sheet(i, f)
-         st.createColumn(priceData)
-         st.regressionLogistique()
-         st.regressionRandom()
+   		for i in self.allNameSheet:
+   			f = self.d[i]
+   			st = sheet(i, f)
+   			st.createColumn(priceData)
+   			st.regressionLogistique()
+   			st.regressionRandom()
+   			st.regressionLineaire()
+   			self.listSheet.append(st)
+   		print(self.listSheet[0].y_test_lnr)
+   		
 
 	
 
@@ -87,7 +93,7 @@ class sheet:
 		self.probs_lr=self.lr.predict_proba(self.x_test_lr)[:,1]
 		cm=self.confusion_lr
 		self.dictMetricLogistique={'recall': recall_score(self.y_test_lr, self.y_predLogistique), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test_lr, self.y_predLogistique), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test_lr, self.probs_lr)}
-		print(self.dictMetricLogistique)
+		# print(self.dictMetricLogistique)
 
 
 
@@ -102,25 +108,31 @@ class sheet:
 		self.probs_rm=self.rm.predict_proba(self.x_test)[:,1]
 		cm=self.confusion_rm
 		self.dictMetricRandom={'recall': recall_score(self.y_test, self.y_predRandom), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predRandom), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs_rm)}
-		print(self.dictMetricRandom)
+		# print(self.dictMetricRandom)
 		
 		
 	def regressionLineaire(self):
 		
-		self.x_train_lnr, self.x_test_lnr,self.y_train_lnr,self.y_test_lnr=train_test_split(self.X,self.Y)
+		self.indexNames = self.newdf[ self.newdf['Nwithdrawal_binary'] == 0 ].index
+		self.dflinear=self.newdf
+		self.dflinear.drop(self.indexNames , inplace=True)
+		self.Ylinear = self.newdf.NW
+		self.Xlinear = self.newdf >> select(X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
+		self.x_train_lnr, self.x_test_lnr,self.y_train_lnr,self.y_test_lnr=train_test_split(self.Xlinear,self.Ylinear)
 		self.lnr = LinearRegression()
 		self.lnr.fit(self.x_train_lnr,self.y_train_lnr)
 		self.y_predLinear=self.lnr.predict(self.x_test_lnr)
 		#self.confusion_lnr=confusion_matrix(self.y_test_lnr,self.y_predLinear)
 		#self.probs_lnr=self.lnr.predict_proba(self.x_test_lnr)[:,1]
-		#cm=self.confusion_lnr
+		#cm=self.confusion_ln
+		self.corr =pearsonr(self.y_test_lnr,self.y_predLinear)
 		self.rmse=mean_squared_error(self.y_test_lnr, self.y_predLinear)
 		self.average=np.average(self.y_test_lnr)
 		self.anrmse=self.rmse/self.average
 		self.min_max=max(self.y_test_lnr)-min(self.y_test_lnr) #je ne vois pas quelle colonne sélectionner...
-		self.nrmse=self.error/self.min_max
-		self.dictMetricLinear={'r2': r2_score(self.y_test_lnr, self.y_predLinear), 'rmse': self.rmse, 'nrmse': self.nrmse, 'anrmse': self.anrmse, 'cor': corr}
-		print(self.dictMetricLinear)
+		self.nrmse=self.rmse/self.min_max
+		self.dictMetricLinear={'r2': r2_score(self.y_test_lnr, self.y_predLinear), 'rmse': self.rmse, 'nrmse': self.nrmse, 'anrmse': self.anrmse, 'cor': self.corr}
+		# print(self.dictMetricLinear)
 
 
 
@@ -132,8 +144,8 @@ if __name__ == '__main__':
     # set_wd()
     dictionaire=import_xlsx()
     priceData =importPriceData()
-    print(dictionaire)
+    # print(dictionaire)
         
-    # fichier=fichierExcel(dictionaire)
-    # fichier.collectAllRegression(priceData)
+    fichier=fichierExcel(dictionaire)
+    fichier.collectAllRegression(priceData)
     
