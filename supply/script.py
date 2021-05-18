@@ -138,7 +138,51 @@ class sheet:
 
 
 
-	#def bestRegression(self,)
+	def bestRegression(self):
+
+		c1=0 #on définit un compteur pour la régression logistique
+		c2=0 #on définit un compteur pour la random forest
+
+		v1= self.dictMetricLogistique.recall
+		v2= self.dictMetricRandom.recall
+		if v1<v2:
+			c2+=1
+		else : 
+			c1+=1
+
+		v1= self.dictMetricLogistique.neg_recall
+		v2= self.dictMetricRandom.neg_recall
+		if v1<v2:
+			c2+=1
+		else : 
+			c1+=1
+
+		v1= self.dictMetricLogistique.precision
+		v2= self.dictMetricRandom.precision
+		if v1<v2:
+			c2+=1
+		else : 
+			c1+=1
+
+		v1= self.dictMetricLogistique.neg_precision
+		v2= self.dictMetricRandom.neg_precision
+		if v1<v2:
+			c2+=1
+		else : 
+			c1+=1
+
+		v1= self.dictMetricLogistique.roc
+		v2= self.dictMetricRandom.roc
+		if v1<v2:
+			c2+=1
+		else : 
+			c1+=1
+
+		#On compare les deux modèles
+		if c1>=c2:
+			print("la régression logistique est meilleure que la random forest")
+		else: 
+			print("la random forest est meilleure que la régression logistique")
  
 if __name__ == '__main__':
     # set_wd()
