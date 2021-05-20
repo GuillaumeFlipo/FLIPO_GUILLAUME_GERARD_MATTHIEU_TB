@@ -160,7 +160,10 @@ class requirement:
         self.dict['rmse']= [self.optimizeSigmoidObject.fit_metrics()[1]]
         self.dict['nrmse']= [self.optimizeSigmoidObject.fit_metrics()[2]]
         self.dict['armse']= [self.optimizeSigmoidObject.fit_metrics()[3]]
-        print(pd.DataFrame(data=self.dict))
+        self.dfrequirement=pd.DataFrame(data=self.dict)
+        # print(self.dfrequirement)
+        self.dfrequirement.to_excel('Demand.xlsx')
+        return self.dfrequirement
 
 if __name__ == '__main__':
 
@@ -223,7 +226,7 @@ if __name__ == '__main__':
     print(sig.fit_metrics())
     c.sigmoid(True)
     solution = requirement(sig)
-    solution.createDict()
+    dfrequirement=solution.createDict()
     
     #3) If time allows do TSA on actual temperature
     #3)1. Check trend (and Remove it)
