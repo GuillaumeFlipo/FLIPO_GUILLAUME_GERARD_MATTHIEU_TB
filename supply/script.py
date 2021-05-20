@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
+import openpyxl
 
 
 
@@ -61,6 +62,8 @@ class fichierExcel:
    			self.listSheet.append(st)
    		if (self.compteurLogistique>=self.compteurRandom):
    			print("Best regression is RandomForest")
+   		else :
+   			print("Best regression is LogisticRegression")
 
    	# def bestRegressionOverAll(self):
    	# 	self.compteurRandom = 0;
@@ -111,6 +114,13 @@ class sheet:
 		cm=self.confusion_lr
 		self.dictMetricLogistique={'recall': recall_score(self.y_test_lr, self.y_predLogistique), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test_lr, self.y_predLogistique), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test_lr, self.probs_lr)}
 		# print(self.dictMetricLogistique)
+		self.corrlr,self.cov =pearsonr(self.y_test_lr,self.y_predLogistique)
+		self.rmselr=mean_squared_error(self.y_test_lr, self.y_predLogistique)
+		self.average=np.average(self.y_test_lr)
+		self.armselr=self.rmselr/self.average
+		self.min_max=max(self.y_test_lr)-min(self.y_test_lr) #je ne vois pas quelle colonne sélectionner...
+		self.nrmselr=self.rmselr/self.min_max
+		self.dictMetricLogistiqueBis={'r2': r2_score(self.y_test_lr, self.y_predLogistique), 'rmselr': self.rmselr, 'nrmselr': self.nrmselr, 'armselr': self.armselr, 'cor': self.corrlr}
 
 
 
@@ -142,13 +152,14 @@ class sheet:
 		#self.confusion_lnr=confusion_matrix(self.y_test_lnr,self.y_predLinear)
 		#self.probs_lnr=self.lnr.predict_proba(self.x_test_lnr)[:,1]
 		#cm=self.confusion_ln
-		self.corr =pearsonr(self.y_test_lnr,self.y_predLinear)
-		self.rmse=mean_squared_error(self.y_test_lnr, self.y_predLinear)
+		# print(self.lnr.coef_)
+		self.corrlnr,self.cov =pearsonr(self.y_test_lnr,self.y_predLinear)
+		self.rmselnr=mean_squared_error(self.y_test_lnr, self.y_predLinear)
 		self.average=np.average(self.y_test_lnr)
-		self.anrmse=self.rmse/self.average
+		self.armselnr=self.rmselnr/self.average
 		self.min_max=max(self.y_test_lnr)-min(self.y_test_lnr) #je ne vois pas quelle colonne sélectionner...
-		self.nrmse=self.rmse/self.min_max
-		self.dictMetricLinear={'r2': r2_score(self.y_test_lnr, self.y_predLinear), 'rmse': self.rmse, 'nrmse': self.nrmse, 'anrmse': self.anrmse, 'cor': self.corr}
+		self.nrmselnr=self.rmselnr/self.min_max
+		self.dictMetricLinear={'r2': r2_score(self.y_test_lnr, self.y_predLinear), 'rmselnr': self.rmselnr, 'nrmselnr': self.nrmselnr, 'armselnr': self.armselnr, 'cor': self.corrlnr}
 		# print(self.dictMetricLinear)
 
 
@@ -200,6 +211,104 @@ class sheet:
 			return "logistique"
 		else: 
 			return "forest"
+
+
+
+class requirement:
+    def __init__(self,fichier):
+        self.dictLogistique=dict()
+        self.dictMultilineaire=dict()
+        self.dictCoefLog=dict()
+        self.dictCoefMulti=dict()
+        self.fichier=fichier
+
+    # def createDictLogistiqueMetrics(self):
+    # 	self.dictLogistique['recall']= []
+    # 	self.dictLogistique['neg_recall']= [] 
+    # 	self.dictLogistique['precision']= []
+    # 	self.dictLogistique['neg_precision']= []
+    # 	self.dictLogistique['roc']= []
+
+    # 	for i in range(len(self.fichier.allNameSheet)):
+    # 		self.dictLogistique['recall'].append(self.fichier.listSheet[i].dictMetricLogistique['recall']) 		
+    # 		self.dictLogistique['neg_recall'].append(self.fichier.listSheet[i].dictMetricLogistique['neg_recall'])
+    # 		self.dictLogistique['precision'].append(self.fichier.listSheet[i].dictMetricLogistique['precision'])
+    # 		self.dictLogistique['neg_precision'].append(self.fichier.listSheet[i].dictMetricLogistique['neg_precision'])
+    # 		self.dictLogistique['roc'].append(self.fichier.listSheet[i].dictMetricLogistique['roc'])
+    # 	self.dfLog=pd.DataFrame(self.dictLogistique)
+    # 	print(self.dfLog)
+
+    def createDictLogistiqueMetrics(self):
+    	self.dictLogistique= {'Logistique':[],'corr': [],'rmse': [],'nrmse': [],'armse': []}
+    	for i in range(len(self.fichier.allNameSheet)):
+    		self.dictLogistique['corr'].append(self.fichier.listSheet[i].dictMetricLogistiqueBis['cor']) 		
+    		self.dictLogistique['rmse'].append(self.fichier.listSheet[i].dictMetricLogistiqueBis['rmselr'])
+    		self.dictLogistique['nrmse'].append(self.fichier.listSheet[i].dictMetricLogistiqueBis['nrmselr'])
+    		self.dictLogistique['armse'].append(self.fichier.listSheet[i].dictMetricLogistiqueBis['armselr'])
+    		self.dictLogistique['Logistique'].append(self.fichier.listSheet[i].dfname)
+    	self.dfLog=pd.DataFrame(self.dictLogistique)
+    	print(self.dfLog)
+
+
+        
+        
+
+    def createDictMultilineaireMetrics(self):
+    	self.dictMultilineaire= {'Multilineaire':[],'corr': [],'rmse': [],'nrmse': [],'armse': []}
+    	for i in range(len(self.fichier.allNameSheet)):
+    		self.dictMultilineaire['corr'].append(self.fichier.listSheet[i].dictMetricLinear['cor']) 		
+    		self.dictMultilineaire['rmse'].append(self.fichier.listSheet[i].dictMetricLinear['rmselnr'])
+    		self.dictMultilineaire['nrmse'].append(self.fichier.listSheet[i].dictMetricLinear['nrmselnr'])
+    		self.dictMultilineaire['armse'].append(self.fichier.listSheet[i].dictMetricLinear['armselnr'])
+    		self.dictMultilineaire['Multilineaire'].append(self.fichier.listSheet[i].dfname)
+    	self.dfMulti=pd.DataFrame(self.dictMultilineaire)
+    	print(self.dfMulti)
+
+    def createDictCoefLog(self):
+    	self.dictCoefLog={'Logistique':[],'lagged_NW': [], 'FSW1':[],'FSW2':[],'SAS_GPL':[],'SAS_NCG':[],'SAS_NBP':[]}
+    	for i in range(len(self.fichier.allNameSheet)):
+    		self.dictCoefLog['lagged_NW'].append(self.fichier.listSheet[i].lr.coef_[0][0])
+    		self.dictCoefLog['FSW1'].append(self.fichier.listSheet[i].lr.coef_[0][1])
+    		self.dictCoefLog['FSW2'].append(self.fichier.listSheet[i].lr.coef_[0][2])
+    		self.dictCoefLog['SAS_GPL'].append(self.fichier.listSheet[i].lr.coef_[0][3])
+    		self.dictCoefLog['SAS_NCG'].append(self.fichier.listSheet[i].lr.coef_[0][4])
+    		self.dictCoefLog['SAS_NBP'].append(self.fichier.listSheet[i].lr.coef_[0][5])
+    		self.dictCoefLog['Logistique'].append(self.fichier.listSheet[i].dfname)
+    	self.dfCoefLog=pd.DataFrame(self.dictCoefLog)
+    	print(self.dfCoefLog)
+
+    def createDictCoefMulti(self):
+    	self.dictCoefMulti={'Multilineaire':[],'lagged_NW': [], 'FSW1':[],'FSW2':[],'SAS_GPL':[],'SAS_NCG':[],'SAS_NBP':[]}
+    	for i in range(len(self.fichier.allNameSheet)):
+    		self.dictCoefMulti['lagged_NW'].append(self.fichier.listSheet[i].lnr.coef_[0])
+    		self.dictCoefMulti['FSW1'].append(self.fichier.listSheet[i].lnr.coef_[1])
+    		self.dictCoefMulti['FSW2'].append(self.fichier.listSheet[i].lnr.coef_[2])
+    		self.dictCoefMulti['SAS_GPL'].append(self.fichier.listSheet[i].lnr.coef_[3])
+    		self.dictCoefMulti['SAS_NCG'].append(self.fichier.listSheet[i].lnr.coef_[4])
+    		self.dictCoefMulti['SAS_NBP'].append(self.fichier.listSheet[i].lnr.coef_[5])
+    		self.dictCoefMulti['Multilineaire'].append(self.fichier.listSheet[i].dfname)
+    	self.dfCoefMulti=pd.DataFrame(self.dictCoefMulti)
+    	print(self.dfCoefMulti)
+
+    def createExcel(self):
+    	self.createDictLogistiqueMetrics()
+    	self.createDictMultilineaireMetrics()
+    	self.createDictCoefLog()
+    	self.createDictCoefMulti()
+    	writer=pd.ExcelWriter('../demand/demand.xlsx', mode='a',engine='openpyxl')
+    	self.dfLog.to_excel(writer,index=False,sheet_name="supply")
+    	self.dfMulti.to_excel(writer,index=False,sheet_name="supply",startrow=len(self.dfLog)+2)
+    	self.dfCoefLog.to_excel(writer,index=False,sheet_name="supply",startcol=6)
+    	self.dfCoefMulti.to_excel(writer,index=False,sheet_name="supply",startcol=6,startrow=len(self.dfLog)+2)
+    	writer.save()
+
+
+
+
+
+
+
+
  
 if __name__ == '__main__':
     # set_wd()
@@ -209,4 +318,12 @@ if __name__ == '__main__':
         
     fichier=fichierExcel(dictionaire)
     fichier.collectAllRegression(priceData)
+    solution=requirement(fichier)
+    solution.createExcel()
     
+
+# self.fichier.listSheet[i].dictMetricLinear['cor']) 
+   
+# self.fichier.listSheet[i].dictMetricLinear['rmselnr']) 
+# self.fichier.listSheet[i].dictMetricLinear['nrmselnr'])
+# self.fichier.listSheet[i].dictMetricLinear['armselnr'])
