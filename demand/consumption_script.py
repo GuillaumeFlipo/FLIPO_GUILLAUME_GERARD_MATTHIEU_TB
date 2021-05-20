@@ -150,15 +150,16 @@ class optimize_sigmoid:
 
 #If you have filled correctly the following code will run without an issue        
 class requirement:
-    def __init__(self):
+    def __init__(self,sig):
         self.dict=dict()
+        self.optimizeSigmoidObject=sig
 
-    def createDict(self,sig):
-        self.dict={'A' : [sig.getCoeff()[0]],'B' : [sig.getCoeff()[1]],'C' : [sig.getCoeff()[2]],'D' : [sig.getCoeff()[3]]}
-        self.dict['corr']= [sig.fit_metrics()[0]]
-        self.dict['rmse']= [sig.fit_metrics()[1]]
-        self.dict['nrmse']= [sig.fit_metrics()[2]]
-        self.dict['armse']= [sig.fit_metrics()[3]]
+    def createDict(self):
+        self.dict={'A' : [self.optimizeSigmoidObject.getCoeff()[0]],'B' : [self.optimizeSigmoidObject.getCoeff()[1]],'C' : [self.optimizeSigmoidObject.getCoeff()[2]],'D' : [self.optimizeSigmoidObject.getCoeff()[3]]}
+        self.dict['corr']= [self.optimizeSigmoidObject.fit_metrics()[0]]
+        self.dict['rmse']= [self.optimizeSigmoidObject.fit_metrics()[1]]
+        self.dict['nrmse']= [self.optimizeSigmoidObject.fit_metrics()[2]]
+        self.dict['armse']= [self.optimizeSigmoidObject.fit_metrics()[3]]
         print(pd.DataFrame(data=self.dict))
 
 if __name__ == '__main__':
@@ -221,8 +222,8 @@ if __name__ == '__main__':
     
     print(sig.fit_metrics())
     c.sigmoid(True)
-    solution = requirement()
-    solution.createDict(sig)
+    solution = requirement(sig)
+    solution.createDict()
     
     #3) If time allows do TSA on actual temperature
     #3)1. Check trend (and Remove it)
