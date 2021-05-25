@@ -38,6 +38,7 @@ def importPriceData(fName='price_data.csv'):
 	return priceData
 
 
+
 class fichierExcel:
    def __init__(self, fichier):
       self.allNameSheet=fichier.keys()
@@ -47,25 +48,6 @@ class fichierExcel:
       self.listSheet=[]
       self.listSheet_Bl=[]
       
-   def collectAllRegression(self,priceData):
-   		self.compteurRandom = 0;
-   		self.compteurLogistique = 0;
-   		for i in self.allNameSheet:
-   			f = self.d[i]
-   			st = sheet(i, f)
-   			st.createColumn(priceData)
-   			st.regressionLogistique()
-   			st.regressionRandom()
-   			st.regressionLineaire()
-   			if (st.bestRegression()=="random"):
-   				self.compteurRandom+=1
-   			else:
-   				self.compteurLogistique+=1
-   			self.listSheet.append(st)
-   		if (self.compteurLogistique>=self.compteurRandom):
-   			print("Best regression is RandomForest")
-   		else :
-   			print("Best regression is LogisticRegression")
 
    	# def bestRegressionOverAll(self):
    	# 	self.compteurRandom = 0;
@@ -81,13 +63,16 @@ class fichierExcel:
       self.Dfdemand['gasDayStartedOn']=conso['Date']
       self.consoModel=cs.h(np.array(conso['Actual'].values),self.consoCoef[0],self.consoCoef[1],self.consoCoef[2],self.consoCoef[3])
       self.Dfdemand['Conso_pred']=self.consoModel
+      self.Dfdemand['LDZ']=conso['LDZ']
       
 
 
    def Balance(self):
    	  self.AllSheet=pd.DataFrame(columns=['gasDayStartedOn'])
+   	  self.AllSheet_NW=pd.DataFrame(columns=['gasDayStartedOn'])
    	  for i in self.allNameSheet:
    	  	self.AllSheet['gasDayStartedOn']=self.d[i]['gasDayStartedOn']
+   	  	self.AllSheet_NW['gasDayStartedOn']=self.d[i]['gasDayStartedOn']
    	  	break
 
    	  
@@ -100,12 +85,41 @@ class fichierExcel:
    	  	stBalance.regressionfinale()
    	  	self.listSheet_Bl.append(stBalance)
    	  self.AllSheet = self.AllSheet.fillna(0)
+   	  self.AllSheet_NW = self.AllSheet_NW.fillna(0)
+   	  self.AllSheetSum_NW=pd.DataFrame(columns=['gasDayStartedOn'])
+   	  self.AllSheetSum_NW['NW_reel']=self.AllSheet_NW.sum(axis=1,numeric_only=True)
+   	  self.AllSheetSum_NW['gasDayStartedOn']= self.AllSheet['gasDayStartedOn']
    	  self.AllSheetSum=pd.DataFrame(columns=['gasDayStartedOn'])
    	  self.AllSheetSum['Supply_pred']=self.AllSheet.sum(axis=1,numeric_only=True)
    	  self.AllSheetSum['gasDayStartedOn']= self.AllSheet['gasDayStartedOn']
+   	  self.AllSheetSum['NW_reel']=self.AllSheetSum_NW['NW_reel']
+   	  self.indexNames = self.AllSheetSum[ self.AllSheetSum['Supply_pred'] < 1 ].index
+   	  self.AllSheetSum.drop(self.indexNames , inplace=True)
    	  self.AllSheetFinal = pd.merge(self.AllSheetSum,self.Dfdemand, on="gasDayStartedOn")
-   	  self.AllSheetFinal['prediction']=np.where((self.AllSheetFinal['Supply_pred']-self.AllSheetFinal['Conso_pred'])>0,"Buy","Sell")
-   	  print(self.AllSheetFinal.head(50))
+   	  # self.AllSheetFinal['prediction']=np.where((self.AllSheetFinal['Supply_pred']-self.AllSheetFinal['Conso_pred'])>0,"Buy","Sell")
+   	  # self.AllSheetFinal['Vrai_Data']=np.where((self.AllSheetFinal['NW_reel']-self.AllSheetFinal['LDZ'])>0,"Buy","Sell")
+   	  self.AllSheetFinal['prediction']=self.AllSheetFinal['Supply_pred']-self.AllSheetFinal['Conso_pred']
+   	  self.AllSheetFinal['prediction']=self.AllSheetFinal['prediction'].map(self.fonction_decision)
+   	  self.AllSheetFinal['Vrai_Data'] = self.AllSheetFinal['NW_reel']-self.AllSheetFinal['LDZ']
+   	  self.AllSheetFinal['Vrai_Data']=self.AllSheetFinal['Vrai_Data'].map(self.fonction_decision)
+   	  self.AllSheetFinal['result']=np.where(self.AllSheetFinal['prediction']==self.AllSheetFinal['Vrai_Data'],1,0)
+   	  self.Sum=self.AllSheetFinal['result'].sum()
+   	  print(self.AllSheetFinal.head())
+   	  print("Nombre de bons résultats : ",self.Sum )
+   	  print("Nombre total Possible de bons résultats : ",len(self.AllSheetFinal['result'].values))
+   	  self.precision=self.Sum/len(self.AllSheetFinal['result'].values)
+   	  self.Sum45=self.AllSheetFinal.head(25)['result'].sum()
+   	  self.precision45=self.Sum45/25
+   	  print("La précision est de : ",self.precision)
+
+
+   def fonction_decision(self,value):
+   	if (value>0):
+   		return "Buy"
+   	elif (value<0):
+   		return "Sell"
+   	else :
+   		return "Flat"
 
         
 
@@ -134,7 +148,7 @@ class sheet:
 		self.newdf['FSW2']=np.where((45-self.newdf['full'])>0,45-self.newdf['full'],0)
 		self.newdf=self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,X.FSW1,X.FSW2)
 		self.newdf=pd.merge(self.newdf,priceData, on='gasDayStartedOn')
-		self.Datedf =self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,X.FSW1,X.FSW2)
+		self.Datedf =self.newdf >> select(X.gasDayStartedOn,X.NW,X.lagged_NW,X.Nwithdrawal_binary,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
 		
 		
 
@@ -165,20 +179,6 @@ class sheet:
 		
 
 
-
-
-
-	def regressionRandom(self):
-
-		self.x_train,self.x_test,self.y_train,self.y_test=train_test_split(self.X,self.Y)
-		self.rm=RandomForestClassifier(n_estimators=500, bootstrap = True, max_features = 'sqrt')
-		self.rm.fit(self.x_train,self.y_train)
-		self.y_predRandom=self.rm.predict(self.x_test)
-		self.confusion_rm=confusion_matrix(self.y_test,self.y_predRandom)
-		self.probs_rm=self.rm.predict_proba(self.x_test)[:,1]
-		cm=self.confusion_rm
-		self.dictMetricRandom={'recall': recall_score(self.y_test, self.y_predRandom), 'neg_recall': cm[1,1]/(cm[0,1] + cm[1,1]), 'confusion': cm, 'precision': precision_score(self.y_test, self.y_predRandom), 'neg_precision':cm[1,1]/cm.sum(axis=1)[1], 'roc': roc_auc_score(self.y_test, self.probs_rm)}
-		# print(self.dictMetricRandom)
 		
 		
 	def regressionLineaire(self):
@@ -210,28 +210,25 @@ class sheet:
 	def regressionfinale(self):
 		
 		self.y_pred_Bin_Bl=self.lr.predict(self.X)
-		
-		# self.Y = self.newdf.Nwithdrawal_binary
-		# self.X = self.newdf >> select(X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
-		# self.x_train_lrBalance, self.x_test_lrBalance,self.y_train_lrBalance,self.y_test_lrBalance=train_test_split(self.X,self.Y)
-		# self.lrBalance = LogisticRegression()
-		# self.lrBalance.fit(self.X,self.Y)
-		# self.y_pred_binary=self.lrBalance.predict(self.X
 		self.dict_y_pred_binary={ 'y_pred_binary' : self.y_pred_Bin_Bl, 'gasDayStartedOn': self.Datedf['gasDayStartedOn'].values}
 		self.df_y_pred_binary=pd.DataFrame(self.dict_y_pred_binary)
 		self.dfBalance=pd.merge(self.Datedf,self.df_y_pred_binary, on='gasDayStartedOn')
 		# self.dfBalance=pd.concat(self.newdf,self.df_y_pred_binary,axis=1)
+		self.dfBalance=self.dfBalance >> select(X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP,X.gasDayStartedOn,X.y_pred_binary)
 		self.temp=self.dfBalance >> mask(self.df_y_pred_binary['y_pred_binary']>0)
-		self.X_reg=self.temp
-		self.y_pred_num_Bl=self.lnr.predict(self.X)
+		self.X_reg=self.temp >> select(X.lagged_NW,X.FSW1,X.FSW2,X.SAS_GPL,X.SAS_NCG,X.SAS_NBP)
+		self.y_pred_num_Bl=self.lnr.predict(self.X_reg)
 		# self.x_train_lnr, self.x_test_lnr,self.y_train_lnr,self.y_test_lnr=train_test_split(self.XlinearBalance,self.YlinearBalance)
 		# self.y_pred_num=self.lnrBalance.predict(self.X)
-		self.dict_y_pred_num={ 'y_pred_num' : self.y_pred_num_Bl, 'gasDayStartedOn': self.Datedf['gasDayStartedOn'].values}
+		self.dict_y_pred_num={ 'y_pred_num' : self.y_pred_num_Bl, 'gasDayStartedOn': self.temp['gasDayStartedOn'].values}
 		self.df_y_pred_num=pd.DataFrame(self.dict_y_pred_num)
 		self.temp=pd.merge(self.temp,self.df_y_pred_num, on='gasDayStartedOn')
 		self.dfBalance = pd.merge(self.dfBalance, self.temp, on = "gasDayStartedOn", how  = "outer")
 		self.dfBalance = self.dfBalance.fillna(0)
 		self.final_df =  self.dfBalance >> select(X.gasDayStartedOn,X.y_pred_num)
+		self.final_df2 = self.Datedf >> select(X.NW,X.gasDayStartedOn)
+		# self.final_df3 = pd.merge(self.final_df,self.final_df2,on = "gasDayStartedOn", how  = "outer")
+		fichier.AllSheet_NW = pd.merge(fichier.AllSheet_NW,self.final_df2,on = "gasDayStartedOn", how  = "outer")
 		fichier.AllSheet = pd.merge(fichier.AllSheet,self.final_df,on = "gasDayStartedOn", how  = "outer")
 		
 
@@ -241,141 +238,18 @@ class sheet:
 
 
 
-	def bestRegression(self):
+class requirement:
+    def __init__(self,fichier):
+        self.fichier=fichier
 
-		c1=0 #on définit un compteur pour la régression logistique
-		c2=0 #on définit un compteur pour la random forest
-
-		v1= self.dictMetricLogistique['recall']
-		v2= self.dictMetricRandom['recall']
-		if v1<v2:
-			c2+=1
-		else : 
-			c1+=1
-
-		v1= self.dictMetricLogistique['neg_recall']
-		v2= self.dictMetricRandom['neg_recall']
-		if v1<v2:
-			c2+=1
-		else : 
-			c1+=1
-
-		v1= self.dictMetricLogistique['precision']
-		v2= self.dictMetricRandom['precision']
-		if v1<v2:
-			c2+=1
-		else : 
-			c1+=1
-
-		v1= self.dictMetricLogistique['neg_precision']
-		v2= self.dictMetricRandom['neg_precision']
-		if v1<v2:
-			c2+=1
-		else : 
-			c1+=1
-
-		v1= self.dictMetricLogistique['roc']
-		v2= self.dictMetricRandom['roc']
-		if v1<v2:
-			c2+=1
-		else : 
-			c1+=1
-
-		#On compare les deux modèles
-		if c1>=c2:
-			return "logistique"
-		else: 
-			return "forest"
-
-
-
-# class requirement:
-#     def __init__(self,fichier):
-#         self.dictLogistique=dict()
-#         self.dictMultilineaire=dict()
-#         self.dictCoefLog=dict()
-#         self.dictCoefMulti=dict()
-#         self.fichier=fichier
-
-#     # def createDictLogistiqueMetrics(self):
-#     # 	self.dictLogistique['recall']= []
-#     # 	self.dictLogistique['neg_recall']= [] 
-#     # 	self.dictLogistique['precision']= []
-#     # 	self.dictLogistique['neg_precision']= []
-#     # 	self.dictLogistique['roc']= []
-
-#     # 	for i in range(len(self.fichier.allNameSheet)):
-#     # 		self.dictLogistique['recall'].append(self.fichier.listSheet[i].dictMetricLogistique['recall']) 		
-#     # 		self.dictLogistique['neg_recall'].append(self.fichier.listSheet[i].dictMetricLogistique['neg_recall'])
-#     # 		self.dictLogistique['precision'].append(self.fichier.listSheet[i].dictMetricLogistique['precision'])
-#     # 		self.dictLogistique['neg_precision'].append(self.fichier.listSheet[i].dictMetricLogistique['neg_precision'])
-#     # 		self.dictLogistique['roc'].append(self.fichier.listSheet[i].dictMetricLogistique['roc'])
-#     # 	self.dfLog=pd.DataFrame(self.dictLogistique)
-#     # 	print(self.dfLog)
-
-#     def createDictLogistiqueMetrics(self):
-#     	self.dictLogistique= {'Logistique':[],'corr': [],'rmse': [],'nrmse': [],'armse': []}
-#     	for i in range(len(self.fichier.allNameSheet)):
-#     		self.dictLogistique['corr'].append(self.fichier.listSheet[i].dictMetricLogistiqueBis['cor']) 		
-#     		self.dictLogistique['rmse'].append(self.fichier.listSheet[i].dictMetricLogistiqueBis['rmselr'])
-#     		self.dictLogistique['nrmse'].append(self.fichier.listSheet[i].dictMetricLogistiqueBis['nrmselr'])
-#     		self.dictLogistique['armse'].append(self.fichier.listSheet[i].dictMetricLogistiqueBis['armselr'])
-#     		self.dictLogistique['Logistique'].append(self.fichier.listSheet[i].dfname)
-#     	self.dfLog=pd.DataFrame(self.dictLogistique)
-#     	print(self.dfLog)
-
-
-        
-        
-
-#     def createDictMultilineaireMetrics(self):
-#     	self.dictMultilineaire= {'Multilineaire':[],'corr': [],'rmse': [],'nrmse': [],'armse': []}
-#     	for i in range(len(self.fichier.allNameSheet)):
-#     		self.dictMultilineaire['corr'].append(self.fichier.listSheet[i].dictMetricLinear['cor']) 		
-#     		self.dictMultilineaire['rmse'].append(self.fichier.listSheet[i].dictMetricLinear['rmselnr'])
-#     		self.dictMultilineaire['nrmse'].append(self.fichier.listSheet[i].dictMetricLinear['nrmselnr'])
-#     		self.dictMultilineaire['armse'].append(self.fichier.listSheet[i].dictMetricLinear['armselnr'])
-#     		self.dictMultilineaire['Multilineaire'].append(self.fichier.listSheet[i].dfname)
-#     	self.dfMulti=pd.DataFrame(self.dictMultilineaire)
-#     	print(self.dfMulti)
-
-#     def createDictCoefLog(self):
-#     	self.dictCoefLog={'Logistique':[],'lagged_NW': [], 'FSW1':[],'FSW2':[],'SAS_GPL':[],'SAS_NCG':[],'SAS_NBP':[]}
-#     	for i in range(len(self.fichier.allNameSheet)):
-#     		self.dictCoefLog['lagged_NW'].append(self.fichier.listSheet[i].lr.coef_[0][0])
-#     		self.dictCoefLog['FSW1'].append(self.fichier.listSheet[i].lr.coef_[0][1])
-#     		self.dictCoefLog['FSW2'].append(self.fichier.listSheet[i].lr.coef_[0][2])
-#     		self.dictCoefLog['SAS_GPL'].append(self.fichier.listSheet[i].lr.coef_[0][3])
-#     		self.dictCoefLog['SAS_NCG'].append(self.fichier.listSheet[i].lr.coef_[0][4])
-#     		self.dictCoefLog['SAS_NBP'].append(self.fichier.listSheet[i].lr.coef_[0][5])
-#     		self.dictCoefLog['Logistique'].append(self.fichier.listSheet[i].dfname)
-#     	self.dfCoefLog=pd.DataFrame(self.dictCoefLog)
-#     	print(self.dfCoefLog)
-
-#     def createDictCoefMulti(self):
-#     	self.dictCoefMulti={'Multilineaire':[],'lagged_NW': [], 'FSW1':[],'FSW2':[],'SAS_GPL':[],'SAS_NCG':[],'SAS_NBP':[]}
-#     	for i in range(len(self.fichier.allNameSheet)):
-#     		self.dictCoefMulti['lagged_NW'].append(self.fichier.listSheet[i].lnr.coef_[0])
-#     		self.dictCoefMulti['FSW1'].append(self.fichier.listSheet[i].lnr.coef_[1])
-#     		self.dictCoefMulti['FSW2'].append(self.fichier.listSheet[i].lnr.coef_[2])
-#     		self.dictCoefMulti['SAS_GPL'].append(self.fichier.listSheet[i].lnr.coef_[3])
-#     		self.dictCoefMulti['SAS_NCG'].append(self.fichier.listSheet[i].lnr.coef_[4])
-#     		self.dictCoefMulti['SAS_NBP'].append(self.fichier.listSheet[i].lnr.coef_[5])
-#     		self.dictCoefMulti['Multilineaire'].append(self.fichier.listSheet[i].dfname)
-#     	self.dfCoefMulti=pd.DataFrame(self.dictCoefMulti)
-#     	print(self.dfCoefMulti)
-
-#     def createExcel(self):
-#     	self.createDictLogistiqueMetrics()
-#     	self.createDictMultilineaireMetrics()
-#     	self.createDictCoefLog()
-#     	self.createDictCoefMulti()
-#     	writer=pd.ExcelWriter('../demand/demand.xlsx', mode='a',engine='openpyxl')
-#     	self.dfLog.to_excel(writer,index=False,sheet_name="supply")
-#     	self.dfMulti.to_excel(writer,index=False,sheet_name="supply",startrow=len(self.dfLog)+2)
-#     	self.dfCoefLog.to_excel(writer,index=False,sheet_name="supply",startcol=6)
-#     	self.dfCoefMulti.to_excel(writer,index=False,sheet_name="supply",startcol=6,startrow=len(self.dfLog)+2)
-#     	writer.save()
+    def createExcel(self):
+    	self.dfFinal=self.fichier.AllSheetFinal
+    	self.DictValues={'Nombre de jours': [1843,45],'Nbre_bon_res' : [self.fichier.Sum,self.fichier.Sum45],'Nbre_bon_res_possible': [len(self.fichier.AllSheetFinal['result'].values),25], 'Precision' : [self.fichier.precision,self.fichier.precision45] }
+    	self.DfValues = pd.DataFrame(self.DictValues)
+    	writer=pd.ExcelWriter('../demand/TB_IN104.xlsx', mode='a',engine='openpyxl')
+    	self.dfFinal.to_excel(writer,index=False,sheet_name="balance")
+    	self.DfValues.to_excel(writer,index=False,sheet_name="balance",startcol=10)
+    	writer.save()
 
 
 
@@ -393,10 +267,12 @@ if __name__ == '__main__':
         
     fichier=fichierExcel(dictionaire)
     # fichier.collectAllRegression(priceData)
-    # solution=requirement(fichier)
-    # solution.createExcel()
+   
     fichier.createDfDemand()
     fichier.Balance()
+
+    solution=requirement(fichier)
+    solution.createExcel()
     
 
 # self.fichier.listSheet[i].dictMetricLinear['cor']) 
