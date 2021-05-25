@@ -121,6 +121,8 @@ class sheet:
 		self.min_max=max(self.y_test_lr)-min(self.y_test_lr) #je ne vois pas quelle colonne sélectionner...
 		self.nrmselr=self.rmselr/self.min_max
 		self.dictMetricLogistiqueBis={'r2': r2_score(self.y_test_lr, self.y_predLogistique), 'rmselr': self.rmselr, 'nrmselr': self.nrmselr, 'armselr': self.armselr, 'cor': self.corrlr}
+		
+
 
 
 
@@ -161,6 +163,7 @@ class sheet:
 		self.nrmselnr=self.rmselnr/self.min_max
 		self.dictMetricLinear={'r2': r2_score(self.y_test_lnr, self.y_predLinear), 'rmselnr': self.rmselnr, 'nrmselnr': self.nrmselnr, 'armselnr': self.armselnr, 'cor': self.corrlnr}
 		# print(self.dictMetricLinear)
+		
 
 
 
@@ -295,7 +298,7 @@ class requirement:
     	self.createDictMultilineaireMetrics()
     	self.createDictCoefLog()
     	self.createDictCoefMulti()
-    	writer=pd.ExcelWriter('../demand/demand.xlsx', mode='a',engine='openpyxl')
+    	writer=pd.ExcelWriter('../demand/TB_IN104.xlsx', mode='a',engine='openpyxl')
     	self.dfLog.to_excel(writer,index=False,sheet_name="supply")
     	self.dfMulti.to_excel(writer,index=False,sheet_name="supply",startrow=len(self.dfLog)+2)
     	self.dfCoefLog.to_excel(writer,index=False,sheet_name="supply",startcol=6)
