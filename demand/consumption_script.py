@@ -112,11 +112,11 @@ class optimize_sigmoid:
             print("Class not initialized since f is not a DataFrame")
 
     #optimize and return metrics use functions h, consumption_sigmoid defined above as well as get_fit_metrics
-    def optimize(self):
+    def optimize(self,plot):
         if self.__f is not None:
             self.__coef, self.__cov = curve_fit(h,self.__f['Actual'].values,self.__f['LDZ'].values,self.guess)
             
-            s = consumption_sigmoid(self.t, self.__f,self.__coef[0], self.__coef[1], self.__coef[2], self.__coef[3],True)
+            s = consumption_sigmoid(self.t, self.__f,self.__coef[0], self.__coef[1], self.__coef[2], self.__coef[3],plot)
             
             self.__corr, self.__rmse, self.__nrmse, self.__anrmse = get_fit_metrics(s, self.__f['LDZ'])
         else:
@@ -162,7 +162,7 @@ class requirement:
         self.dict['armse']= [self.optimizeSigmoidObject.fit_metrics()[3]]
         self.dfrequirement=pd.DataFrame(data=self.dict)
         # print(self.dfrequirement)
-        self.dfrequirement.to_excel('Demand.xlsx')
+        self.dfrequirement.to_excel('TB_IN104.xlsx',index=False,sheet_name="Demand")
         return self.dfrequirement
 
 if __name__ == '__main__':
@@ -182,7 +182,7 @@ if __name__ == '__main__':
 
     #2)2. optimize the parameters
     sig = optimize_sigmoid(conso)
-    sig.optimize()
+    sig.optimize(True)
     # print(sig.fit_metrics())
     c = sig.create_consumption()
     print(sig)
